@@ -30,7 +30,7 @@ public class OrderController {
 		catch (Exception e) {
 			Response<String> resp = new Response<String>();
 			e.printStackTrace();
-			return new ResponseEntity<Response<String>>(resp, HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<Response<String>>(resp, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
 	}

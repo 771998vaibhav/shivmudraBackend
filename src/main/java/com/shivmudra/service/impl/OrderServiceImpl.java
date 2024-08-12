@@ -4,9 +4,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -15,6 +18,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.shivmudra.dto.OrderDto;
+import com.shivmudra.dto.OrderResponse;
 import com.shivmudra.dto.PaymentPhotoDto;
 import com.shivmudra.model.OrderDetails;
 import com.shivmudra.model.Response;
@@ -25,6 +29,7 @@ import com.shivmudra.utils.CommonUtils;
 import com.shivmudra.utils.DateUtils;
 import org.apache.commons.io.FileUtils;
 
+import java.util.ArrayList;
 import java.util.Base64;
 
 @Component
@@ -111,7 +116,7 @@ public class OrderServiceImpl implements OrderService {
 
 			System.out.println("id" + details.getId());
 			res.setStatus(200);
-			res.setMessage("Order Placed With Order Id:"+details.getId());
+			res.setMessage("Order Placed With Order Id:" + details.getId());
 
 			return new ResponseEntity<Response<String>>(res, HttpStatus.OK);
 		} catch (Exception e) {
@@ -157,5 +162,96 @@ public class OrderServiceImpl implements OrderService {
 			e.printStackTrace();
 			return null;
 		}
+	}
+
+	@Override
+	public ResponseEntity<Response<List<OrderResponse>>> getOrderDetails(String shirtSize, Pageable Pageable)
+			throws Exception {
+		Response<List<OrderResponse>> res = new Response<List<OrderResponse>>();
+		try {
+			List<OrderResponse> List = new ArrayList<OrderResponse>();
+			Page<OrderDetails> details;
+			
+			if (shirtSize != null && !shirtSize.isEmpty()) {
+
+			
+				details = orderDetailsRepository.getBySize(shirtSize, Pageable);
+
+			} else {
+				
+				details = orderDetailsRepository.findAll(Pageable);
+			}
+
+			if (details != null && details.getSize() > 0) {
+				for (OrderDetails order : details) {
+
+					OrderResponse response = new OrderResponse();
+
+					response.setOrderId(order.getId().toString());
+					if (order.getAddress() != null) {
+						response.setAddress(order.getAddress());
+					}
+
+					if (order.getName() != null) {
+						response.setName(order.getName());
+					}
+
+					if (order.getMobileNo() != null) {
+						response.setName(order.getMobileNo());
+					}
+
+					if (order.getSize() != null) {
+						response.setName(order.getSize());
+					}
+
+					if (order.getIsPaymentPhotoUploaded() != null) {
+						if (order.getIsPaymentPhotoUploaded() == Boolean.TRUE) {
+							response.setPaymentDone("YES");
+						} else {
+							response.setPaymentDone("NO");
+						}
+					}
+
+					if (order.getOrderDate() != null) {
+						response.setOrderDate(CommonUtils.convertDateToString(order.getOrderDate()));
+					}
+
+					List.add(response);
+				}
+			}
+
+			res.setBody(List);
+			res.setMessage("fetched SucessFully");
+			res.setStatus(200);
+			return new ResponseEntity<Response<List<OrderResponse>>>(res, HttpStatus.OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<Response<List<OrderResponse>>>(res, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+	
+	
+	@Override
+	public ResponseEntity<Response<Long>> getOrderCount(String shirtSize) throws Exception {
+	    Response<Long> res = new Response<>();
+	    try {
+	        long count;
+	        
+	        if (shirtSize != null && !shirtSize.isEmpty()) {
+	            count = orderDetailsRepository.countBySize(shirtSize);
+	        } else {
+	            count = orderDetailsRepository.count();
+	        }
+
+	        res.setBody(count);
+	        res.setMessage("Count fetched successfully");
+	        res.setStatus(200);
+	        return new ResponseEntity<>(res, HttpStatus.OK);
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        res.setMessage("Error occurred while fetching the count");
+	        res.setStatus(500);
+	        return new ResponseEntity<>(res, HttpStatus.INTERNAL_SERVER_ERROR);
+	    }
 	}
 }

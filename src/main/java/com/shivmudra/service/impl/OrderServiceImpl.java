@@ -197,11 +197,11 @@ public class OrderServiceImpl implements OrderService {
 					}
 
 					if (order.getMobileNo() != null) {
-						response.setName(order.getMobileNo());
+						response.setMobileNo(order.getMobileNo());
 					}
 
 					if (order.getSize() != null) {
-						response.setName(order.getSize());
+						response.setSize(order.getSize());
 					}
 
 					if (order.getIsPaymentPhotoUploaded() != null) {
